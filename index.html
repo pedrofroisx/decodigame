@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Decodificador Mestre - Jogo de Códigos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #00ff41;
+            --secondary: #0abdc6;
+            --dark: #0a0e27;
+            --darker: #050816;
+            --accent: #ff00ff;
+            --warning: #ffaa00;
+            --danger: #ff3366;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(10, 14, 39, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px var(--primary);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); }
+            to { text-shadow: 0 0 20px var(--secondary), 0 0 30px var(--secondary); }
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 255, 65, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+        }
+        
+        .stat-item {
+            text-align: center;
+            position: relative;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+        
+        .stat-value.combo {
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+        }
+        
+        .stat-value.highscore {
+            color: var(--warning);
+            text-shadow: 0 0 10px var(--warning);
+        }
+        
+        .timer-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid var(--secondary);
+        }
+        
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        
+        .timer-fill.warning {
+            background: linear-gradient(90deg, var(--warning), var(--danger));
+            box-shadow: 0 0 10px var(--warning);
+        }
+        
+        .game-area {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .challenge-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--secondary);
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .challenge-type {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .challenge-content {
+            font-size: 2rem;
+            color: var(--warning);
+            margin: 20px 0;
+            word-wrap: break-word;
+            text-shadow: 0 0 10px var(--warning);
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .option-btn {
+            background: rgba(10, 189, 198, 0.1);
+            border: 2px solid var(--secondary);
+            color: var(--secondary);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        
+        .option-btn:hover:not(:disabled) {
+            background: rgba(10, 189, 198, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(10, 189, 198, 0.4);
+        }
+        
+        .option-btn.correct {
+            background: rgba(0, 255, 65, 0.3);
+            border-color: var(--primary);
+            color: var(--primary);
+            animation: pulse 0.5s;
+        }
+        
+        .option-btn.wrong {
+            background: rgba(255, 51, 102, 0.3);
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .input-area {
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+        }
+        
+        .submit-btn, .start-btn, .menu-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: var(--dark);
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            color: white;
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+        
+        .menu-btn {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            margin: 5px;
+        }
+        
+        .submit-btn:hover, .start-btn:hover, .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 255, 65, 0.5);
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.8);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.5s;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .diff-btn {
+            background: rgba(10, 189, 198, 0.1);
+            border: 2px solid var(--secondary);
+            color: var(--secondary);
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            min-width: 150px;
+        }
+        
+        .diff-btn:hover {
+            background: rgba(10, 189, 198, 0.3);
+            transform: translateY(-3px);
+        }
+        
+        .diff-btn.easy { border-color: var(--primary); color: var(--primary); }
+        .diff-btn.medium { border-color: var(--warning); color: var(--warning); }
+        .diff-btn.hard { border-color: var(--danger); color: var(--danger); }
+        
+        .diff-btn.easy:hover { background: rgba(0, 255, 65, 0.2); }
+        .diff-btn.medium:hover { background: rgba(255, 170, 0, 0.2); }
+        .diff-btn.hard:hover { background: rgba(255, 51, 102, 0.2); }
+        
+        .points-popup {
+            position: absolute;
+            font-size: 2rem;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1.5s ease-out forwards;
+            z-index: 1000;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        @keyframes floatUp {
+            0% { 
+                opacity: 1; 
+                transform: translateY(0) scale(0.5); 
+            }
+            50% {
+                transform: translateY(-50px) scale(1.2);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(-100px) scale(1); 
+            }
+        }
+        
+        .combo-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            pointer-events: none;
+            animation: comboFlash 1s ease-out forwards;
+            z-index: 2000;
+        }
+        
+        @keyframes comboFlash {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+            30% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+        }
+        
+        .end-screen {
+            text-align: center;
+            width: 100%;
+        }
+        
+        .end-screen h2 {
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        .final-score {
+            font-size: 4rem;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary);
+            margin: 20px 0;
+            animation: pulse 1s infinite;
+        }
+        
+        .rank-badge {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            border-radius: 50px;
+            font-size: 1.5rem;
+            color: white;
+            margin: 20px 0;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+            animation: badgeShine 2s infinite;
+        }
+        
+        @keyframes badgeShine {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 0, 255, 0.5); }
+            50% { box-shadow: 0 0 50px rgba(255, 0, 255, 0.8); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid var(--secondary);
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .stat-box-label {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-box-value {
+            color: var(--primary);
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--primary);
+        }
+        
+        .new-record {
+            color: var(--warning);
+            font-size: 1.5rem;
+            margin: 15px 0;
+            animation: pulse 1s infinite;
+            text-shadow: 0 0 10px var(--warning);
+        }
+        
+        .countdown {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        
+        .countdown span {
+            color: var(--warning);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .challenge-content { font-size: 1.5rem; }
+            .options { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .final-score { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 DECODIFICADOR MESTRE</h1>
+        <p class="subtitle">Domine os códigos secretos das comunicações</p>
+        
+        <div class="stats" id="statsBar" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-label">Pontos</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Combo</div>
+                <div class="stat-value combo" id="combo">x1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Nível</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Desafio</div>
+                <div class="stat-value" id="challenge">1/10</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Recorde</div>
+                <div class="stat-value highscore" id="highscore">0</div>
+            </div>
+        </div>
+        
+        <div class="timer-bar" id="timerBar" style="display: none;">
+            <div class="timer-fill" id="timerFill" style="width: 100%"></div>
+        </div>
+        
+        <div class="progress-bar" id="progressBar" style="display: none;">
+            <div class="progress-fill" id="progress" style="width: 0%"></div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <!-- Tela Inicial -->
+            <div id="startScreen">
+                <h2 style="color: var(--secondary); margin-bottom: 20px;">BEM-VINDO, AGENTE!</h2>
+                <p style="margin-bottom: 15px; color: var(--text-main);">Você será testado em:</p>
+                <ul style="text-align: left; margin: 20px auto; max-width: 500px; color: var(--warning); list-style: none;">
+                    <li style="margin: 10px 0;">📡 Alfabeto Fonético Internacional (NATO)</li>
+                    <li style="margin: 10px 0;">👨‍✈️ Símbolos de Profissões</li>
+                    <li style="margin: 10px 0;">📻 Código Q (Radiocomunicação)</li>
+                    <li style="margin: 10px 0;">🔐 Decodificação de Mensagens</li>
+                </ul>
+                
+                <p style="margin: 20px 0; color: var(--secondary);">ESCOLHA A DIFICULDADE:</p>
+                <div class="difficulty-selector">
+                    <button class="diff-btn easy" onclick="startGame('easy')">
+                        🟢 Fácil<br><small>20s por questão</small>
+                    </button>
+                    <button class="diff-btn medium" onclick="startGame('medium')">
+                        🟡 Médio<br><small>15s por questão</small>
+                    </button>
+                    <button class="diff-btn hard" onclick="startGame('hard')">
+                        🔴 Difícil<br><small>10s por questão</small>
+                    </button>
+                </div>
+                
+                <div style="margin-top: 30px; padding: 15px; background: rgba(255, 170, 0, 0.1); border: 1px solid var(--warning); border-radius: 8px;">
+                    <p style="color: var(--warning); font-size: 0.9rem;">
+                        💡 <strong>SISTEMA DE PONTOS:</strong> Responda rápido para ganhar bônus! 
+                        Acertos consecutivos aumentam seu COMBO (x2, x3, x4...). 
+                        Erros zeram o combo!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados do jogo
+        const phoneticAlphabet = {
+            'A': 'ALFA', 'B': 'BRAVO', 'C': 'CHARLIE', 'D': 'DELTA',
+            'E': 'ECHO', 'F': 'FOXTROT', 'G': 'GOLF', 'H': 'HOTEL',
+            'I': 'INDIA', 'J': 'JULIET', 'K': 'KILO', 'L': 'LIMA',
+            'M': 'MIKE', 'N': 'NOVEMBER', 'O': 'OSCAR', 'P': 'PAPA',
+            'Q': 'QUEBEC', 'R': 'ROMEO', 'S': 'SIERRA', 'T': 'TANGO',
+            'U': 'UNIFORM', 'V': 'VICTOR', 'W': 'WHISKEY', 'X': 'X-RAY',
+            'Y': 'YANKEE', 'Z': 'ZULU'
+        };
+        
+        const qCodes = {
+            'QRA': 'Qual é o nome da sua estação?',
+            'QRG': 'Qual é a frequência exata?',
+            'QRH': 'A frequência está variando',
+            'QRI': 'Como é o tom do meu transmissor?',
+            'QRK': 'Qual a legibilidade dos meus sinais?',
+            'QRL': 'Você está ocupado?',
+            'QRM': 'Estou sendo interferido',
+            'QRN': 'Estou sendo perturbado por estática',
+            'QRO': 'Devo aumentar a potência?',
+            'QRP': 'Devo diminuir a potência?',
+            'QRQ': 'Devo enviar mais rápido?',
+            'QRS': 'Devo enviar mais devagar?',
+            'QRT': 'Devo parar de transmitir?',
+            'QRU': 'Você tem algo para mim?',
+            'QRV': 'Você está pronto?',
+            'QRW': 'Devo avisar que...?',
+            'QRX': 'Quando você me chamará novamente?',
+            'QRY': 'Qual é a minha vez?',
+            'QRZ': 'Quem está me chamando?'
+        };
+        
+        const professions = [
+            { symbol: '👨‍✈️', name: 'PILOTO', description: 'Comanda aeronaves' },
+            { symbol: '👨‍⚕️', name: 'MÉDICO', description: 'Cuida da saúde' },
+            { symbol: '👨‍🚒', name: 'BOMBEIRO', description: 'Combate incêndios' },
+            { symbol: '👮', name: 'POLICIAL', description: 'Mantém a ordem' },
+            { symbol: '👨‍🍳', name: 'CHEF', description: 'Prepara alimentos' },
+            { symbol: '👨‍🏫', name: 'PROFESSOR', description: 'Ensina conhecimentos' },
+            { symbol: '👷', name: 'ENGENHEIRO', description: 'Constrói estruturas' },
+            { symbol: '👨‍💻', name: 'PROGRAMADOR', description: 'Desenvolve software' },
+            { symbol: '👨‍🎨', name: 'ARTISTA', description: 'Cria obras de arte' },
+            { symbol: '👨‍🔬', name: 'CIENTISTA', description: 'Faz pesquisas' }
+        ];
+        
+        // Configurações de dificuldade
+        const difficulties = {
+            easy: { time: 20, challenges: 10, basePoints: 10, timeBonus: 1.0 },
+            medium: { time: 15, challenges: 12, basePoints: 15, timeBonus: 1.5 },
+            hard: { time: 10, challenges: 15, basePoints: 20, timeBonus: 2.0 }
+        };
+        
+        let gameState = {
+            score: 0,
+            level: 1,
+            currentChallenge: 0,
+            totalChallenges: 10,
+            challenges: [],
+            combo: 1,
+            maxCombo: 1,
+            correctAnswers: 0,
+            wrongAnswers: 0,
+            difficulty: 'medium',
+            timeLeft: 15,
+            timerInterval: null,
+            highScore: parseInt(localStorage.getItem('decoderHighScore')) || 0,
+            isNewRecord: false
+        };
+        
+        // Atualiza high score na tela inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('highscore').textContent = gameState.highScore;
+        });
+        
+        function startGame(difficulty) {
+            const diff = difficulties[difficulty];
+            
+            gameState = {
+                score: 0,
+                level: 1,
+                currentChallenge: 0,
+                totalChallenges: diff.challenges,
+                challenges: generateChallenges(difficulty),
+                combo: 1,
+                maxCombo: 1,
+                correctAnswers: 0,
+                wrongAnswers: 0,
+                difficulty: difficulty,
+                timeLeft: diff.time,
+                timerInterval: null,
+                highScore: parseInt(localStorage.getItem('decoderHighScore')) || 0,
+                isNewRecord: false
+            };
+            
+            document.getElementById('statsBar').style.display = 'grid';
+            document.getElementById('timerBar').style.display = 'block';
+            document.getElementById('progressBar').style.display = 'block';
+            
+            updateStats();
+            loadChallenge();
+        }
+        
+        function generateChallenges(difficulty) {
+            const challenges = [];
+            const types = ['phonetic', 'profession', 'qcode', 'decode'];
+            const diff = difficulties[difficulty];
+            
+            for (let i = 0; i < diff.challenges; i++) {
+                const type = types[Math.floor(Math.random() * types.length)];
+                challenges.push(createChallenge(type, difficulty));
+            }
+            
+            return challenges;
+        }
+        
+        function createChallenge(type, difficulty) {
+            switch(type) {
+                case 'phonetic':
+                    return createPhoneticChallenge(difficulty);
+                case 'profession':
+                    return createProfessionChallenge(difficulty);
+                case 'qcode':
+                    return createQCodeChallenge(difficulty);
+                case 'decode':
+                    return createDecodeChallenge(difficulty);
+            }
+        }
+        
+        function createPhoneticChallenge(difficulty) {
+            const letters = Object.keys(phoneticAlphabet);
+            const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+            const correctAnswer = phoneticAlphabet[randomLetter];
+            
+            const options = [correctAnswer];
+            while (options.length < 4) {
+                const randomOption = phoneticAlphabet[letters[Math.floor(Math.random() * letters.length)]];
+                if (!options.includes(randomOption)) {
+                    options.push(randomOption);
+                }
+            }
+            
+            return {
+                type: 'ALFABETO FONÉTICO',
+                content: `Qual é o código fonético para a letra "${randomLetter}"?`,
+                options: shuffleArray(options),
+                correct: correctAnswer,
+                basePoints: difficulties[difficulty].basePoints
+            };
+        }
+        
+        function createProfessionChallenge(difficulty) {
+            const profession = professions[Math.floor(Math.random() * professions.length)];
+            
+            const options = [profession.name];
+            while (options.length < 4) {
+                const randomProf = professions[Math.floor(Math.random() * professions.length)];
+                if (!options.includes(randomProf.name)) {
+                    options.push(randomProf.name);
+                }
+            }
+            
+            return {
+                type: 'PROFISSÕES',
+                content: `${profession.symbol}<br><br>${profession.description}`,
+                options: shuffleArray(options),
+                correct: profession.name,
+                basePoints: difficulties[difficulty].basePoints + 5
+            };
+        }
+        
+        function createQCodeChallenge(difficulty) {
+            const codes = Object.keys(qCodes);
+            const randomCode = codes[Math.floor(Math.random() * codes.length)];
+            const correctAnswer = qCodes[randomCode];
+            
+            const options = [correctAnswer];
+            while (options.length < 4) {
+                const randomOption = qCodes[codes[Math.floor(Math.random() * codes.length)]];
+                if (!options.includes(randomOption)) {
+                    options.push(randomOption);
+                }
+            }
+            
+            return {
+                type: 'CÓDIGO Q',
+                content: `O que significa o código "${randomCode}"?`,
+                options: shuffleArray(options),
+                correct: correctAnswer,
+                basePoints: difficulties[difficulty].basePoints + 10
+            };
+        }
+        
+        function createDecodeChallenge(difficulty) {
+            const words = ['ALFA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT'];
+            const word = words[Math.floor(Math.random() * words.length)];
+            
+            let encoded = '';
+            for (let char of word) {
+                if (phoneticAlphabet[char]) {
+                    encoded += phoneticAlphabet[char] + ' ';
+                }
+            }
+            
+            return {
+                type: 'DECODIFICAÇÃO',
+                content: `Decodifique a mensagem:<br><br><span style="font-size: 1.5rem;">${encoded.trim()}</span>`,
+                input: true,
+                correct: word,
+                basePoints: difficulties[difficulty].basePoints + 15,
+                hint: 'Digite a palavra decodificada'
+            };
+        }
+        
+        function loadChallenge() {
+            if (gameState.currentChallenge >= gameState.totalChallenges) {
+                endGame();
+                return;
+            }
+            
+            clearInterval(gameState.timerInterval);
+            
+            const challenge = gameState.challenges[gameState.currentChallenge];
+            const gameArea = document.getElementById('gameArea');
+            const diff = difficulties[gameState.difficulty];
+            
+            gameState.timeLeft = diff.time;
+            
+            let html = `
+                <div class="challenge-box">
+                    <div class="challenge-type">${challenge.type}</div>
+                    <div class="challenge-content">${challenge.content}</div>
+            `;
+            
+            if (challenge.options) {
+                html += `<div class="options">`;
+                challenge.options.forEach(option => {
+                    html += `<button class="option-btn" onclick="checkAnswer('${option.replace(/'/g, "\\'")}', '${challenge.correct.replace(/'/g, "\\'")}', ${challenge.basePoints})">${option}</button>`;
+                });
+                html += `</div>`;
+            } else if (challenge.input) {
+                html += `
+                    <div class="input-area">
+                        <input type="text" class="input-field" id="answerInput" placeholder="${challenge.hint}" onkeypress="if(event.key==='Enter')submitAnswer('${challenge.correct}', ${challenge.basePoints})">
+                        <button class="submit-btn" onclick="submitAnswer('${challenge.correct}', ${challenge.basePoints})">ENVIAR</button>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            gameArea.innerHTML = html;
+            
+            if (challenge.input) {
+                document.getElementById('answerInput').focus();
+            }
+            
+            startTimer();
+        }
+        
+        function startTimer() {
+            const diff = difficulties[gameState.difficulty];
+            const timerFill = document.getElementById('timerFill');
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft -= 0.1;
+                const percentage = (gameState.timeLeft / diff.time) * 100;
+                timerFill.style.width = percentage + '%';
+                
+                if (percentage < 30) {
+                    timerFill.classList.add('warning');
+                } else {
+                    timerFill.classList.remove('warning');
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    handleTimeout();
+                }
+            }, 100);
+        }
+        
+        function handleTimeout() {
+            const buttons = document.querySelectorAll('.option-btn');
+            const challenge = gameState.challenges[gameState.currentChallenge];
+            
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === challenge.correct) {
+                    btn.classList.add('correct');
+                }
+            });
+            
+            const input = document.getElementById('answerInput');
+            if (input) {
+                input.disabled = true;
+                input.style.borderColor = 'var(--danger)';
+                input.style.background = 'rgba(255, 51, 102, 0.2)';
+            }
+            
+            const submitBtn = document.querySelector('.submit-btn');
+            if (submitBtn) submitBtn.disabled = true;
+            
+            // Perde combo ao expirar tempo
+            gameState.combo = 1;
+            gameState.wrongAnswers++;
+            
+            showPointsPopup('TEMPO!', 'var(--danger)');
+            updateStats();
+            
+            setTimeout(() => {
+                gameState.currentChallenge++;
+                updateStats();
+                loadChallenge();
+            }, 1500);
+        }
+        
+        function calculatePoints(basePoints) {
+            const diff = difficulties[gameState.difficulty];
+            const timeBonus = Math.floor((gameState.timeLeft / diff.time) * basePoints * diff.timeBonus);
+            const comboMultiplier = gameState.combo;
+            const totalPoints = Math.floor((basePoints + timeBonus) * comboMultiplier);
+            
+            return {
+                total: totalPoints,
+                base: basePoints,
+                timeBonus: timeBonus,
+                multiplier: comboMultiplier
+            };
+        }
+        
+        function checkAnswer(selected, correct, basePoints) {
+            clearInterval(gameState.timerInterval);
+            
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correct) {
+                    btn.classList.add('correct');
+                } else if (btn.textContent === selected && selected !== correct) {
+                    btn.classList.add('wrong');
+                }
+            });
+            
+            if (selected === correct) {
+                handleCorrectAnswer(basePoints);
+            } else {
+                handleWrongAnswer();
+            }
+            
+            setTimeout(() => {
+                gameState.currentChallenge++;
+                updateStats();
+                loadChallenge();
+            }, 1500);
+        }
+        
+        function submitAnswer(correct, basePoints) {
+            clearInterval(gameState.timerInterval);
+            
+            const input = document.getElementById('answerInput');
+            const answer = input.value.toUpperCase().trim();
+            
+            input.disabled = true;
+            document.querySelector('.submit-btn').disabled = true;
+            
+            if (answer === correct) {
+                input.style.borderColor = 'var(--primary)';
+                input.style.background = 'rgba(0, 255, 65, 0.2)';
+                handleCorrectAnswer(basePoints);
+            } else {
+                input.style.borderColor = 'var(--danger)';
+                input.style.background = 'rgba(255, 51, 102, 0.2)';
+                handleWrongAnswer();
+            }
+            
+            setTimeout(() => {
+                gameState.currentChallenge++;
+                updateStats();
+                loadChallenge();
+            }, 1500);
+        }
+        
+        function handleCorrectAnswer(basePoints) {
+            const points = calculatePoints(basePoints);
+            gameState.score += points.total;
+            gameState.correctAnswers++;
+            gameState.combo++;
+            
+            if (gameState.combo > gameState.maxCombo) {
+                gameState.maxCombo = gameState.combo;
+            }
+            
+            gameState.level = Math.floor(gameState.score / 100) + 1;
+            
+            // Feedback visual
+            showPointsPopup(`+${points.total}`, 'var(--primary)');
+            
+            // Mostra combo especial
+            if (gameState.combo >= 3) {
+                showComboIndicator(gameState.combo);
+            }
+            
+            updateStats();
+        }
+        
+        function handleWrongAnswer() {
+            gameState.combo = 1;
+            gameState.wrongAnswers++;
+            showPointsPopup('COMBO PERDIDO!', 'var(--danger)');
+            updateStats();
+        }
+        
+        function showPointsPopup(text, color) {
+            const popup = document.createElement('div');
+            popup.className = 'points-popup';
+            popup.textContent = text;
+            popup.style.color = color;
+            popup.style.left = '50%';
+            popup.style.top = '40%';
+            popup.style.transform = 'translateX(-50%)';
+            
+            document.querySelector('.game-area').appendChild(popup);
+            
+            setTimeout(() => popup.remove(), 1500);
+        }
+        
+        function showComboIndicator(combo) {
+            const indicator = document.createElement('div');
+            indicator.className = 'combo-indicator';
+            indicator.textContent = `COMBO x${combo}!`;
+            
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => indicator.remove(), 1000);
+        }
+        
+        function updateStats() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('combo').textContent = `x${gameState.combo}`;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('challenge').textContent = `${gameState.currentChallenge + 1}/${gameState.totalChallenges}`;
+            document.getElementById('highscore').textContent = gameState.highScore;
+            
+            const progress = (gameState.currentChallenge / gameState.totalChallenges) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+        
+        function endGame() {
+            clearInterval(gameState.timerInterval);
+            
+            // Verifica novo recorde
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                gameState.isNewRecord = true;
+                localStorage.setItem('decoderHighScore', gameState.score);
+            }
+            
+            const accuracy = gameState.totalChallenges > 0 
+                ? Math.round((gameState.correctAnswers / gameState.totalChallenges) * 100) 
+                : 0;
+            
+            let rank = 'RECRUTA';
+            let rankEmoji = '🔰';
+            
+            if (accuracy >= 90 && gameState.maxCombo >= 5) { rank = 'MESTRE DECODIFICADOR'; rankEmoji = '👑'; }
+            else if (accuracy >= 80) { rank = 'AGENTE ELITE'; rankEmoji = '🌟'; }
+            else if (accuracy >= 70) { rank = 'AGENTE SENIOR'; rankEmoji = '⭐'; }
+            else if (accuracy >= 50) { rank = 'AGENTE'; rankEmoji = '🎖️'; }
+            else if (accuracy >= 30) { rank = 'APRENDIZ'; rankEmoji = '📚'; }
+            
+            const gameArea = document.getElementById('gameArea');
+            
+            gameArea.innerHTML = `
+                <div class="end-screen">
+                    <h2>MISSÃO COMPLETA!</h2>
+                    
+                    ${gameState.isNewRecord ? '<div class="new-record">🏆 NOVO RECORDE! 🏆</div>' : ''}
+                    
+                    <div class="rank-badge">${rankEmoji} ${rank}</div>
+                    
+                    <div class="final-score">${gameState.score}</div>
+                    <p style="color: var(--secondary); margin-bottom: 20px;">PONTOS TOTAIS</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-box-label">Acertos</div>
+                            <div class="stat-box-value" style="color: var(--primary);">${gameState.correctAnswers}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-label">Erros</div>
+                            <div class="stat-box-value" style="color: var(--danger);">${gameState.wrongAnswers}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-label">Precisão</div>
+                            <div class="stat-box-value" style="color: var(--warning);">${accuracy}%</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-label">Maior Combo</div>
+                            <div class="stat-box-value" style="color: var(--accent);">x${gameState.maxCombo}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-label">Recorde</div>
+                            <div class="stat-box-value" style="color: var(--warning);">${gameState.highScore}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-label">Dificuldade</div>
+                            <div class="stat-box-value" style="color: var(--secondary); text-transform: capitalize;">${gameState.difficulty}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="countdown">
+                        Reiniciando em <span id="countdown">10</span> segundos...
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="menu-btn" onclick="restartGame()">🔄 JOGAR NOVAMENTE</button>
+                        <button class="menu-btn" onclick="backToMenu()">🏠 MENU PRINCIPAL</button>
+                    </div>
+                </div>
+            `;
+            
+            // Contagem regressiva para reinício automático
+            let countdown = 10;
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                const countdownEl = document.getElementById('countdown');
+                if (countdownEl) {
+                    countdownEl.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    restartGame();
+                }
+            }, 1000);
+            
+            // Salva o interval para poder cancelar
+            window.currentCountdownInterval = countdownInterval;
+        }
+        
+        function restartGame() {
+            if (window.currentCountdownInterval) {
+                clearInterval(window.currentCountdownInterval);
+            }
+            startGame(gameState.difficulty);
+        }
+        
+        function backToMenu() {
+            if (window.currentCountdownInterval) {
+                clearInterval(window.currentCountdownInterval);
+            }
+            
+            document.getElementById('statsBar').style.display = 'none';
+            document.getElementById('timerBar').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+            
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = `
+                <div id="startScreen">
+                    <h2 style="color: var(--secondary); margin-bottom: 20px;">BEM-VINDO, AGENTE!</h2>
+                    <p style="margin-bottom: 15px; color: var(--text-main);">Você será testado em:</p>
+                    <ul style="text-align: left; margin: 20px auto; max-width: 500px; color: var(--warning); list-style: none;">
+                        <li style="margin: 10px 0;">📡 Alfabeto Fonético Internacional (NATO)</li>
+                        <li style="margin: 10px 0;">👨‍✈️ Símbolos de Profissões</li>
+                        <li style="margin: 10px 0;">📻 Código Q (Radiocomunicação)</li>
+                        <li style="margin: 10px 0;">🔐 Decodificação de Mensagens</li>
+                    </ul>
+                    
+                    <p style="margin: 20px 0; color: var(--secondary);">ESCOLHA A DIFICULDADE:</p>
+                    <div class="difficulty-selector">
+                        <button class="diff-btn easy" onclick="startGame('easy')">
+                            🟢 Fácil<br><small>20s por questão</small>
+                        </button>
+                        <button class="diff-btn medium" onclick="startGame('medium')">
+                            🟡 Médio<br><small>15s por questão</small>
+                        </button>
+                        <button class="diff-btn hard" onclick="startGame('hard')">
+                            🔴 Difícil<br><small>10s por questão</small>
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 15px; background: rgba(255, 170, 0, 0.1); border: 1px solid var(--warning); border-radius: 8px;">
+                        <p style="color: var(--warning); font-size: 0.9rem;">
+                            💡 <strong>SISTEMA DE PONTOS:</strong> Responda rápido para ganhar bônus! 
+                            Acertos consecutivos aumentam seu COMBO (x2, x3, x4...). 
+                            Erros zeram o combo!
+                        </p>
+                        <p style="color: var(--warning); font-size: 0.9rem; margin-top: 10px;">
+                            🏆 <strong>RECORDE ATUAL:</strong> ${gameState.highScore} pontos
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+    </script>
+</body>
+</html>
